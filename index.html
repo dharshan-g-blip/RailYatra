@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RailYatra — Railway Reservation System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand-row">
+    <div class="brand">
+      <div class="mark">RY</div>
+      <div>
+        <h1>RailYatra</h1>
+        <div class="tagline">SEARCH · BOOK · TRAVEL</div>
+      </div>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-screen="book" class="active">Book Ticket</button>
+    <button data-screen="status">PNR Status</button>
+    <button data-screen="history">My Bookings</button>
+  </nav>
+</header>
+
+<main>
+  <!-- UC1 Search Trains, UC2 Check Seat Availability, UC3 Select Train & Class,
+       UC4 Passenger Details, UC5 Make Payment, UC6 Generate PNR -->
+  <section class="panel active" id="panel-book">
+    <div class="stepper" id="stepper"></div>
+    <div id="book-content"></div>
+  </section>
+
+  <!-- UC7 View Booking/PNR Status, UC8 Cancel Booking -->
+  <section class="panel" id="panel-status">
+    <div class="card">
+      <h2>Check PNR Status</h2>
+      <p class="subtext">Enter your 10-digit PNR to view booking details.</p>
+      <div id="status-banner"></div>
+      <div style="display:flex; gap:10px; max-width:360px;">
+        <input type="text" id="pnr-input" placeholder="e.g. 4821093756" class="mono" style="flex:1; padding:10px 12px; border:1px solid var(--slate-300); border-radius:4px; font-size:14px;">
+        <button class="btn btn-primary" id="pnr-lookup-btn">Search</button>
+      </div>
+    </div>
+    <div id="status-result"></div>
+  </section>
+
+  <!-- UC9 View Booking History (and Cancel, UC8) -->
+  <section class="panel" id="panel-history">
+    <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div>
+        <h2>My Bookings</h2>
+        <p class="subtext" style="margin:0;">All bookings made from this browser.</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="clear-all-btn">Clear all (testing)</button>
+    </div>
+    <div id="history-list"></div>
+  </section>
+</main>
+
+<footer>Demo project — trains, seats and payments are simulated. No real transactions occur.</footer>
+
+<div id="toast"></div>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h3 id="modal-title">Cancel this booking?</h3>
+    <p id="modal-body">This action cannot be undone.</p>
+    <div class="btn-row">
+      <button class="btn btn-danger" id="modal-confirm">Yes, cancel it</button>
+      <button class="btn btn-ghost" id="modal-dismiss">Go back</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
