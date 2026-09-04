@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "mywebsite"
+        IMAGE = "dharshan38/railway-reservation-system"
     }
 
     stages {
@@ -13,21 +13,40 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Docker Build') {
             steps {
-                bat 'docker build -t %IMAGE_NAME%:%BUILD_NUMBER% .'
-                bat 'docker tag %IMAGE_NAME%:%BUILD_NUMBER% %IMAGE_NAME%:latest'
+                bat 'docker build -t %IMAGE%:%BUILD_NUMBER% .'
+                bat 'docker tag %IMAGE%:%BUILD_NUMBER% %IMAGE%:latest'
             }
         }
 
-        stage('Run Container') {
+        stage('Docker Login') {
             steps {
-                bat '''
-                    docker stop mywebsite || exit 0
-                    docker rm mywebsite || exit 0
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-cred',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
+                    bat 'echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USER% --password-stdin'
+                }
+            }
+        }
 
-                    docker run -d --name mywebsite -p 8081:80 %IMAGE_NAME%:latest
-                '''
+        stage('Docker Push') {
+            steps {
+                bat 'docker push %IMAGE%:%BUILD_NUMBER%'
+                bat 'docker push %IMAGE%:latest'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                bat 'docker stop mywebsite || exit 0'
+                bat 'docker rm mywebsite || exit 0'
+                bat 'docker pull %IMAGE%:latest'
+                bat 'docker run -d --name mywebsite -p 8081:80 %IMAGE%:latest'
             }
         }
     }
