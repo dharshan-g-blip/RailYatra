@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # RailYatra — Railway Reservation System (Frontend)
 
 Frontend-only implementation of the Railway Reservation System use-case
