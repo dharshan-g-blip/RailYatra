@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "mywebsite"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat 'docker build -t %IMAGE_NAME%:%BUILD_NUMBER% .'
+                bat 'docker tag %IMAGE_NAME%:%BUILD_NUMBER% %IMAGE_NAME%:latest'
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                bat '''
+                    docker stop mywebsite || exit 0
+                    docker rm mywebsite || exit 0
+
+                    docker run -d --name mywebsite -p 8081:80 %IMAGE_NAME%:latest
+                '''
+            }
+        }
+    }
+}
