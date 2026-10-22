@@ -1,18 +1,7 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = 'thushar2007/railyatra:latest'
-    }
-
     stages {
-        stage('Clone Repository') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/dharshan-g-blip/RailYatra.git'
-            }
-        }
-
         stage('Build and Test with Maven') {
             steps {
                 bat 'mvn clean package'
@@ -27,45 +16,36 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t %DOCKER_IMAGE% .'
+                bat 'docker build -t railyatra-app:latest .'
             }
         }
 
-        stage('Docker Hub Login') {
+        stage('Check Kubernetes') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-cred',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-                    powershell '''
-                        $ErrorActionPreference = "Stop"
-
-                        $env:DOCKER_PASS |
-                            docker login --username $env:DOCKER_USER --password-stdin
-
-                        if ($LASTEXITCODE -ne 0) {
-                            throw "Docker Hub login failed. Check the Jenkins credential."
-                        }
-
-                        Write-Output "Docker Hub login successful."
-                    '''
-                }
+                bat 'kubectl version --client'
+                bat 'kubectl config current-context'
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Deploy to Kubernetes') {
             steps {
-                bat 'docker push %DOCKER_IMAGE%'
+                bat 'kubectl apply -f k8s/deployment.yaml'
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                bat 'kubectl rollout status deployment/railyatra --timeout=120s'
+                bat 'kubectl get deployments'
+                bat 'kubectl get pods'
+                bat 'kubectl get services'
             }
         }
     }
 
     post {
         success {
-            echo 'RailYatra built, tested, and pushed to Docker Hub successfully!'
+            echo 'RailYatra built and deployed to Kubernetes successfully!'
         }
 
         failure {
