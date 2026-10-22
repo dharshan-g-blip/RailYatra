@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: railyatra
-          image: thushar2007/railyatra-app:latest
+          image: railyatra-app:latest
           ports:
             - containerPort: 80
 ---
