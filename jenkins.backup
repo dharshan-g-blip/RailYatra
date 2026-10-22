@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE = "dharshan38/railway-reservation-system"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                bat 'docker build -t %IMAGE%:%BUILD_NUMBER% .'
+                bat 'docker tag %IMAGE%:%BUILD_NUMBER% %IMAGE%:latest'
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-cred',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
+                    bat 'echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USER% --password-stdin'
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                bat 'docker push %IMAGE%:%BUILD_NUMBER%'
+                bat 'docker push %IMAGE%:latest'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                bat 'docker stop mywebsite || exit 0'
+                bat 'docker rm mywebsite || exit 0'
+                bat 'docker pull %IMAGE%:latest'
+                bat 'docker run -d --name mywebsite -p 8081:80 %IMAGE%:latest'
+            }
+        }
+    }
+}
