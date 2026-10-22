@@ -1,22 +1,75 @@
 pipeline {
     agent any
+
+    environment {
+        DOCKER_IMAGE = 'thushar2007/railyatra:latest'
+    }
+
     stages {
-        stage('Clone') {
+        stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/dharshan-g-blip/RailYatra.git'
+                git branch: 'main',
+                    url: 'https://github.com/dharshan-g-blip/RailYatra.git'
             }
         }
+
+        stage('Build and Test with Maven') {
+            steps {
+                bat 'mvn clean package'
+            }
+        }
+
+        stage('Check Docker') {
+            steps {
+                bat 'docker --version'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t railyatra .'
+                bat 'docker build -t %DOCKER_IMAGE% .'
             }
         }
-        stage('Run Container') {
+
+        stage('Docker Hub Login') {
             steps {
-                bat 'docker stop railyatra || exit 0'
-                bat 'docker rm railyatra || exit 0'
-                bat 'docker run -d -p 8081:80 --name railyatra railyatra'
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-cred',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    powershell '''
+                        $ErrorActionPreference = "Stop"
+
+                        $env:DOCKER_PASS |
+                            docker login --username $env:DOCKER_USER --password-stdin
+
+                        if ($LASTEXITCODE -ne 0) {
+                            throw "Docker Hub login failed. Check the Jenkins credential."
+                        }
+
+                        Write-Output "Docker Hub login successful."
+                    '''
+                }
             }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                bat 'docker push %DOCKER_IMAGE%'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'RailYatra built, tested, and pushed to Docker Hub successfully!'
+        }
+
+        failure {
+            echo 'Pipeline failed. Check Console Output for the first error.'
         }
     }
 }
